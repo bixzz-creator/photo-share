@@ -17,7 +17,7 @@ interface PhotoGridProps {
   emptyMessage?: string
 }
 
-/** Responsive masonry grid: 1 column on mobile, 2 on tablet, 3 on desktop. */
+/** Responsive masonry grid: 2 columns on phones, 3 on tablet, 4 on wide screens. */
 export function PhotoGrid({
   photos,
   selectable = false,

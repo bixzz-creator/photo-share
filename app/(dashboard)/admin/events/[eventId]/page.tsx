@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/card'
 import { getAuthContext } from '@/lib/auth'
 import type { EventRecord } from '@/lib/types'
-import { absoluteUrl, formatDate } from '@/lib/utils'
+import { formatDate, galleryShareUrl } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Event' }
 
@@ -72,7 +72,7 @@ export default async function AdminEventDetailPage({ params, searchParams }: Pag
     ({ gallery_photos, ...gallery }) => ({
       ...gallery,
       photoCount: (gallery_photos as { count: number }[] | null)?.[0]?.count ?? 0,
-      galleryUrl: absoluteUrl(`/gallery/${gallery.slug}`),
+      galleryUrl: galleryShareUrl(gallery.slug),
     })
   )
 

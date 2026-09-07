@@ -100,7 +100,7 @@ export default function GalleryPinPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-neutral-50">
+      <main className="flex min-h-dvh items-center justify-center bg-neutral-50">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </main>
     )
@@ -108,7 +108,7 @@ export default function GalleryPinPage({ params }: PageProps) {
 
   if (!gallery) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-neutral-50 p-6 text-center">
+      <main className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-neutral-50 p-6 text-center">
         <ImageOff className="h-8 w-8 text-muted-foreground" />
         <h1 className="title-display text-3xl">Gallery not available</h1>
         <p className="max-w-sm text-sm text-muted-foreground">
@@ -122,7 +122,7 @@ export default function GalleryPinPage({ params }: PageProps) {
   const minutes = Math.ceil(lockedFor / 60)
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-50 p-4">
+    <main className="flex min-h-dvh items-center justify-center bg-neutral-50 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
       <div className="w-full max-w-md space-y-6">
         <Card>
           <CardHeader className="text-center">

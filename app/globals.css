@@ -82,11 +82,29 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (hover: hover) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
   body {
     @apply bg-background text-foreground;
+    min-height: 100dvh;
     font-feature-settings: 'rlig' 1, 'calt' 1;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overscroll-behavior-y: contain;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   /* Numbers in stats and counts should not jitter as they change. */
@@ -127,17 +145,18 @@
 
 /* Masonry grid used by the photo and gallery views. */
 .masonry {
-  column-gap: 1rem;
-  columns: 1;
+  column-gap: 0.75rem;
+  columns: 2;
 }
 
 @media (min-width: 640px) {
   .masonry {
+    column-gap: 1rem;
     columns: 2;
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .masonry {
     columns: 3;
   }

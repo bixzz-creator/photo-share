@@ -75,31 +75,89 @@ export function getFileExtension(filename: string): string {
   return parts.length > 1 ? parts.pop()!.toLowerCase() : ''
 }
 
+const CANONICAL_APP_URL = 'https://photo-share.vercel.app'
+
+function hostFromUrl(value: string): string {
+  try {
+    return new URL(value.startsWith('http') ? value : `https://${value}`).host
+  } catch {
+    return value.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  }
+}
+
+/**
+ * Vercel appends a random word when the project name is taken
+ * (`photo-share-lovat.vercel.app`). Shareable customer links should use the
+ * canonical `photo-share.vercel.app` host plus the gallery title slug.
+ */
+function canonicalizeAppOrigin(value: string): string {
+  const host = hostFromUrl(value)
+  if (/^photo-share-[a-z0-9]+\.vercel\.app$/i.test(host)) return CANONICAL_APP_URL
+  return `https://${host}`.replace(/\/$/, '')
+}
+
 export function absoluteUrl(path: string): string {
   const configured = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
   const vercelHost =
     process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL ?? ''
-  const vercel = vercelHost ? `https://${vercelHost.replace(/^https?:\/\//, '')}` : ''
+  const vercel = vercelHost ? canonicalizeAppOrigin(vercelHost) : ''
   const configuredIsLocal = !configured || /localhost|127\.0\.0\.1/.test(configured)
-  const base = configuredIsLocal && vercel ? vercel : configured || vercel || 'http://localhost:3000'
-  return `${base}${path.startsWith('/') ? path : `/${path}`}`
+  const configuredOrigin = configuredIsLocal ? '' : canonicalizeAppOrigin(configured)
+  const base =
+    configuredOrigin ||
+    (configuredIsLocal && vercel ? vercel : '') ||
+    vercel ||
+    (process.env.VERCEL ? CANONICAL_APP_URL : 'http://localhost:3000')
+  const normalized = path.replace(/\/view\/?$/i, '')
+  return `${base}${normalized.startsWith('/') ? normalized : `/${normalized}`}`
 }
 
-/**
- * Public gallery path segment from the title, e.g. "Beach wedding" →
- * `beach-wedding-k3m9`. A short suffix keeps two galleries with the same name
- * from colliding.
- */
-export function gallerySlugFromTitle(title: string): string {
-  const base =
+export function gallerySharePath(slug: string): string {
+  return `/gallery/${slug.replace(/^\/+|\/view\/?$/gi, '')}`
+}
+
+export function galleryShareUrl(slug: string): string {
+  return absoluteUrl(gallerySharePath(slug))
+}
+
+/** Title only, e.g. "Ganesh Wedding" → `ganesh-wedding`. */
+export function slugifyTitle(title: string): string {
+  return (
     title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-      .slice(0, 40) || 'gallery'
+      .slice(0, 48) || 'gallery'
+  )
+}
+
+function randomSlugSuffix(length = 4): string {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  const bytes = new Uint8Array(4)
+  const bytes = new Uint8Array(length)
   crypto.getRandomValues(bytes)
-  const suffix = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('')
-  return `${base}-${suffix}`
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('')
+}
+
+/**
+ * Public gallery path from the title. Prefers `ganesh-wedding`; adds a short
+ * suffix only when that slug is already taken.
+ */
+export function gallerySlugFromTitle(title: string): string {
+  return `${slugifyTitle(title)}-${randomSlugSuffix(4)}`
+}
+
+export async function uniqueGallerySlug(
+  title: string,
+  taken: (slug: string) => Promise<boolean>
+): Promise<string> {
+  const base = slugifyTitle(title)
+  const stem = base.length >= 4 ? base : `${base}-${randomSlugSuffix(4)}`
+  if (!(await taken(stem))) return stem
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const candidate = `${stem}-${randomSlugSuffix(4)}`
+    if (!(await taken(candidate))) return candidate
+  }
+
+  return `${stem}-${randomSlugSuffix(8)}`
 }

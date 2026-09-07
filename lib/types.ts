@@ -94,6 +94,7 @@ export interface GalleryPhoto {
   width: number | null
   height: number | null
   displayOrder: number
+  originalName: string
 }
 
 export interface UploadResultItem {

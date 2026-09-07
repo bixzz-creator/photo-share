@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { requireAdmin } from '@/lib/auth'
 import { badRequest, handleApiError, notFound, serverError, validationDetails } from '@/lib/http'
-import { absoluteUrl, gallerySlugFromTitle } from '@/lib/utils'
+import { galleryShareUrl, uniqueGallerySlug } from '@/lib/utils'
 import { createGallerySchema } from '@/lib/validations/gallery'
 
 /** GET /api/gallery?eventId=... - galleries for an event (admin only). */
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const galleries = (data ?? []).map(({ gallery_photos, ...gallery }) => ({
       ...gallery,
       photoCount: (gallery_photos as { count: number }[] | null)?.[0]?.count ?? 0,
-      galleryUrl: absoluteUrl(`/gallery/${gallery.slug}`),
+      galleryUrl: galleryShareUrl(gallery.slug),
     }))
 
     return NextResponse.json({ galleries })
@@ -75,7 +75,10 @@ export async function POST(request: NextRequest) {
     }
 
     const pinHash = await bcrypt.hash(pin, 10)
-    const slug = gallerySlugFromTitle(title)
+    const slug = await uniqueGallerySlug(title, async (candidate) => {
+      const { data } = await supabase.from('galleries').select('id').eq('slug', candidate).maybeSingle()
+      return Boolean(data)
+    })
 
     const { data: gallery, error } = await supabase
       .from('galleries')
@@ -118,7 +121,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         gallery: safeGallery,
-        galleryUrl: absoluteUrl(`/gallery/${slug}`),
+        galleryUrl: galleryShareUrl(slug),
         slug,
         // Returned once so the admin can pass it to the customer.
         pin,

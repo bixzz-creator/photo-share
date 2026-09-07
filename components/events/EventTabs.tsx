@@ -29,7 +29,7 @@ export function EventTabs({ eventId }: EventTabsProps) {
   ]
 
   return (
-    <div className="-mx-1 overflow-x-auto border-b">
+    <div className="-mx-1 overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch] border-b">
       <nav className="flex min-w-max gap-1 px-1" aria-label="Event sections">
         {tabs.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href

@@ -24,7 +24,7 @@ export function DashboardShell({ fullName, email, role, children }: DashboardShe
   }, [pathname])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <div
         className={cn(
           'fixed inset-0 z-40 bg-foreground/40 backdrop-blur-[2px] transition-opacity lg:hidden',
@@ -52,7 +52,7 @@ export function DashboardShell({ fullName, email, role, children }: DashboardShe
           role={role}
           onToggleSidebar={() => setSidebarOpen((open) => !open)}
         />
-        <main className="mx-auto w-full min-w-0 max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full min-w-0 max-w-[1400px] px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
           {children}
         </main>
       </div>

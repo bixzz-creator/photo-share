@@ -14,6 +14,8 @@ interface RouteParams {
 interface EmbeddedPhoto {
   id: string
   storage_path: string
+  original_name: string
+  mime_type: string | null
   width: number | null
   height: number | null
 }
@@ -81,7 +83,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { data: rows, error } = await supabase
       .from('gallery_photos')
-      .select('display_order, photo:photos(id, storage_path, width, height)')
+      .select('display_order, photo:photos(id, storage_path, original_name, mime_type, width, height)')
       .eq('gallery_id', gallery.id)
       .order('display_order', { ascending: true })
 
@@ -104,7 +106,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const photos: GalleryPhoto[] = entries.flatMap(({ displayOrder, photo }) => {
       const url = signed.get(photo.storage_path)
       return url
-        ? [{ id: photo.id, url, width: photo.width, height: photo.height, displayOrder }]
+        ? [
+            {
+              id: photo.id,
+              url,
+              width: photo.width,
+              height: photo.height,
+              displayOrder,
+              originalName: photo.original_name,
+            },
+          ]
         : []
     })
 
@@ -116,16 +127,23 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       ])
     }
 
-    return NextResponse.json({
-      gallery: {
-        slug: gallery.slug,
-        title: gallery.title,
-        description: gallery.description,
+    return NextResponse.json(
+      {
+        gallery: {
+          slug: gallery.slug,
+          title: gallery.title,
+          description: gallery.description,
+        },
+        photos,
+        total: photos.length,
+        expiresIn: SIGNED_URL_EXPIRY,
       },
-      photos,
-      total: photos.length,
-      expiresIn: SIGNED_URL_EXPIRY,
-    })
+      {
+        headers: {
+          'Cache-Control': 'private, no-store',
+        },
+      }
+    )
   } catch (error) {
     return handleApiError(error)
   }

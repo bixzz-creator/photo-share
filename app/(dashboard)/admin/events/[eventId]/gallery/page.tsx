@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/card'
 import { getAuthContext } from '@/lib/auth'
 import { listEventPhotoIds, listEventPhotos } from '@/lib/queries'
-import { absoluteUrl } from '@/lib/utils'
+import { galleryShareUrl } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Publish gallery' }
 
@@ -51,7 +51,7 @@ export default async function AdminEventGalleryPage({ params }: PageProps) {
     ({ gallery_photos, ...gallery }) => ({
       ...gallery,
       photoCount: (gallery_photos as { count: number }[] | null)?.[0]?.count ?? 0,
-      galleryUrl: absoluteUrl(`/gallery/${gallery.slug}`),
+      galleryUrl: galleryShareUrl(gallery.slug),
     })
   )
 

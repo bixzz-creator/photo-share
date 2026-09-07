@@ -3,6 +3,7 @@
  */
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
+import { GET as downloadPhoto } from '@/app/api/gallery/[gallerySlug]/download/[photoId]/route'
 import { GET as galleryInfo } from '@/app/api/gallery/[gallerySlug]/route'
 import { GET as galleryPhotos } from '@/app/api/gallery/[gallerySlug]/photos/route'
 import { POST as verifyPin } from '@/app/api/gallery/[gallerySlug]/verify/route'
@@ -76,7 +77,10 @@ describe('POST /api/gallery', () => {
           { data: [{ id: PHOTO_ID }], error: null },
           { data: null, error: null },
         ],
-        galleries: { data: galleryRow(), error: null },
+        galleries: [
+          { data: null, error: null },
+          { data: galleryRow(), error: null },
+        ],
         gallery_photos: { data: null, error: null },
       },
     })
@@ -86,14 +90,13 @@ describe('POST /api/gallery', () => {
     const payload = await response.json()
 
     expect(response.status).toBe(201)
-    // The slug is derived from the title plus a short unique suffix.
-    expect(payload.slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)+$/)
-    expect(payload.galleryUrl).toBe(`http://localhost:3000/gallery/${payload.slug}`)
+    expect(payload.slug).toBe('riverside-wedding')
+    expect(payload.galleryUrl).toBe(`http://localhost:3000/gallery/riverside-wedding`)
     expect(payload.pin).toBe(CORRECT_PIN)
     // The hash must never leave the server.
     expect(payload.gallery.pin_hash).toBeUndefined()
 
-    const insert = supabase.__builders('galleries')[0]?.insert
+    const insert = supabase.__builders('galleries').find((builder) => builder.insert.mock.calls.length)?.insert
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({ is_published: true, event_id: EVENT_ID })
     )
@@ -325,6 +328,8 @@ describe('GET /api/gallery/[gallerySlug]/photos', () => {
               photo: {
                 id: PHOTO_ID,
                 storage_path: 'events/e/u/photo.png',
+                original_name: 'ceremony.png',
+                mime_type: 'image/png',
                 width: 1600,
                 height: 1200,
               },
@@ -397,5 +402,67 @@ describe('GET /api/gallery/[gallerySlug]/photos', () => {
 
     expect(response.status).toBe(401)
     expect(payload.error).toBe('Gallery session has expired')
+  })
+})
+
+describe('GET /api/gallery/[gallerySlug]/download/[photoId]', () => {
+  const rawToken = 'a'.repeat(64)
+
+  function downloadRequest(token?: string) {
+    return new NextRequest(`http://localhost:3000/api/gallery/${SLUG}/download/${PHOTO_ID}`, {
+      headers: token ? { [GALLERY_SESSION_HEADER]: token } : undefined,
+    })
+  }
+
+  it('streams the original file for a valid session', async () => {
+    createAdminClient.mockReturnValue(
+      createSupabaseMock({
+        tables: {
+          gallery_sessions: {
+            data: {
+              id: 'session-1',
+              expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+              gallery: {
+                id: 'gallery-1',
+                slug: SLUG,
+                is_published: true,
+                expires_at: null,
+              },
+            },
+            error: null,
+          },
+          gallery_photos: {
+            data: {
+              photo: {
+                id: PHOTO_ID,
+                storage_path: 'events/e/u/photo.png',
+                original_name: 'ceremony.png',
+                mime_type: 'image/png',
+              },
+            },
+            error: null,
+          },
+        },
+      })
+    )
+
+    const response = await downloadPhoto(downloadRequest(signSessionToken(rawToken)), {
+      params: { gallerySlug: SLUG, photoId: PHOTO_ID },
+    })
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Content-Disposition')).toContain('ceremony.png')
+    expect(response.headers.get('Content-Type')).toBe('image/png')
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store')
+  })
+
+  it('rejects a download with no session', async () => {
+    createAdminClient.mockReturnValue(createSupabaseMock())
+
+    const response = await downloadPhoto(downloadRequest(), {
+      params: { gallerySlug: SLUG, photoId: PHOTO_ID },
+    })
+
+    expect(response.status).toBe(401)
   })
 })

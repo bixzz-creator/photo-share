@@ -60,6 +60,7 @@ export function createQueryBuilder(result: QueryResult = { data: null, error: nu
 export interface StorageOverrides {
   upload?: jest.Mock
   remove?: jest.Mock
+  download?: jest.Mock
   getPublicUrl?: jest.Mock
   createSignedUrl?: jest.Mock
   createSignedUrls?: jest.Mock
@@ -99,6 +100,12 @@ export function createSupabaseMock(options: SupabaseMockOptions = {}) {
   const storageApi = {
     upload: storage.upload ?? jest.fn(async () => ({ data: { path: 'uploaded' }, error: null })),
     remove: storage.remove ?? jest.fn(async () => ({ data: [], error: null })),
+    download:
+      storage.download ??
+      jest.fn(async () => ({
+        data: new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: 'image/png' }),
+        error: null,
+      })),
     getPublicUrl:
       storage.getPublicUrl ??
       jest.fn(() => ({ data: { publicUrl: 'https://storage.test/public.png' } })),

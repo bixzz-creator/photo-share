@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="grid min-h-screen lg:grid-cols-[1.15fr_1fr]">
+    <main className="grid min-h-dvh lg:grid-cols-[1.15fr_1fr]">
       <div className="relative hidden overflow-hidden bg-rail p-10 text-rail-foreground lg:flex lg:flex-col lg:justify-between">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.14]"
@@ -56,7 +56,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </ol>
       </div>
 
-      <div className="flex flex-col items-center justify-center bg-background px-4 py-12">
+      <div className="flex flex-col items-center justify-center bg-background px-4 py-12 pb-[max(3rem,env(safe-area-inset-bottom))]">
         <Link href="/" className="mb-10 flex items-center gap-2.5 lg:hidden">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brass text-brass-foreground">
             <Aperture className="h-4 w-4" />

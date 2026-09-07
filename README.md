@@ -99,7 +99,7 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | Project Settings → API | Safe in the browser |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project Settings → API | Safe in the browser |
 | `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API | **Server only.** Bypasses RLS |
-| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` locally | Used to build gallery links |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` locally, `https://photo-share.vercel.app` in production | Canonical host for shareable gallery links. Never `photo-share-lovat.vercel.app`. |
 | `GALLERY_SESSION_SECRET` | `openssl rand -hex 32` | Signs gallery session tokens |
 
 ## 3. Run it
@@ -184,9 +184,11 @@ performs its own authorization.
 | `DELETE /api/photos/[id]` | Session | Admin: any. Member: own uploads |
 | `GET /api/gallery?eventId=` | Admin | Galleries for an event |
 | `POST /api/gallery` | Admin | Publish a gallery, returns `{galleryUrl, slug, pin}` |
-| `GET /api/gallery/[slug]` | Public | Title, description, photo count. Never the PIN hash |
+| `GET /api/gallery/[slug]` | Public | Title, description, photo count. Never the PIN hash. Edge-cached 30s |
 | `POST /api/gallery/[slug]/verify` | Public | Exchanges the PIN for a session token |
 | `GET /api/gallery/[slug]/photos` | Gallery session | Signed URLs, 1 hour expiry |
+| `GET /api/gallery/[slug]/download/[photoId]` | Gallery session | Streams the original file as an attachment |
+| `GET /api/health` | Public | Load balancer probe. No database. |
 
 ### Uploads
 
@@ -282,13 +284,27 @@ One thing to change before real production use:
 
 ## Deploying to Vercel
 
+Shareable gallery links are `https://photo-share.vercel.app/gallery/{gallery-title}` —
+for example `https://photo-share.vercel.app/gallery/ganesh-wedding`. The path is the
+event title, not a random id, and it never includes `/view` (that page is only for
+a customer who already entered the PIN).
+
+If Vercel assigned a suffix such as `photo-share-lovat.vercel.app`, rename the
+project to `photo-share` under **Settings → General** so the production domain
+matches. The app also rewrites that suffix when it builds a customer link, but
+the project itself should live at `photo-share.vercel.app`.
+
 1. Push the repository to GitHub, then import it at
    [vercel.com/new](https://vercel.com/new). The framework preset is detected.
 2. Add all five environment variables from `.env.example` to the project. Set
-   `NEXT_PUBLIC_APP_URL` to the deployment URL, e.g.
-   `https://your-app.vercel.app`, because gallery links are built from it.
+   `NEXT_PUBLIC_APP_URL` to `https://photo-share.vercel.app`.
 3. Deploy, then add the same URL to **Authentication → URL Configuration** in
    Supabase (Site URL plus a `/**` redirect entry).
+
+Vercel is the load balancer: Anycast at the edge, then serverless functions in
+Mumbai (`bom1` in `vercel.json`) so they sit next to a typical India/South-Asia
+Supabase project. `GET /api/health` is the probe those edges can hit. Static
+assets are immutable-cached; public gallery metadata is cached for 30 seconds.
 
 Everything stays inside the free tiers: Vercel Hobby for hosting, Supabase free
 for Postgres, Auth and 1 GB of storage. Photos are served through signed URLs
@@ -296,14 +312,15 @@ rather than `next/image`, so no image-optimisation quota is consumed.
 
 ## Testing
 
-85 tests across 8 suites.
+91 tests across 9 suites.
 
 ```
 __tests__/api/auth.test.ts          admin registration, login, 401s, rate limiting
 __tests__/api/members.test.ts       admin-provisioned photographer accounts
 __tests__/api/events.test.ts        admin vs member permissions, assignment scoping
 __tests__/api/photos.test.ts        upload validation, magic bytes, size cap, selection rights, paging
-__tests__/api/gallery.test.ts       publishing, PIN verification, lockout, session expiry
+__tests__/api/gallery.test.ts       publishing, PIN verification, lockout, session expiry, downloads
+__tests__/api/health.test.ts        load balancer probe
 __tests__/components/PinEntry.test.tsx        6 boxes, focus advance, backspace, auto submit
 __tests__/components/PhotoUploader.test.tsx   accepted files, rejections, previews
 __tests__/components/PhotoSelector.test.tsx   selection persistence, bulk select, load more

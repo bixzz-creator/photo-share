@@ -28,10 +28,13 @@ interface GalleryCardProps {
 
 export function GalleryCard({ gallery, pin }: GalleryCardProps) {
   const [copied, setCopied] = useState(false)
+  const shareUrl = gallery.galleryUrl
+    .replace(/photo-share-[a-z0-9]+\.vercel\.app/gi, 'photo-share.vercel.app')
+    .replace(/\/view\/?$/i, '')
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(gallery.galleryUrl)
+      await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
       toast.success('Gallery link copied')
       setTimeout(() => setCopied(false), 2000)
@@ -68,19 +71,19 @@ export function GalleryCard({ gallery, pin }: GalleryCardProps) {
         </div>
 
         <div className="flex items-center gap-2 rounded-md border bg-muted/40 p-2">
-          <code className="min-w-0 flex-1 truncate text-xs">{gallery.galleryUrl}</code>
+          <code className="min-w-0 flex-1 truncate text-xs">{shareUrl}</code>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-11 w-11 shrink-0 sm:h-8 sm:w-8"
             onClick={copyLink}
             aria-label="Copy gallery link"
           >
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+          <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 sm:h-8 sm:w-8" asChild>
             <a
-              href={gallery.galleryUrl}
+              href={shareUrl}
               target="_blank"
               rel="noreferrer"
               aria-label="Open gallery"

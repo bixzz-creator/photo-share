@@ -70,7 +70,7 @@ export default function GalleryViewPage({ params }: PageProps) {
 
   if (loading || !data) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-neutral-50">
+      <main className="flex min-h-dvh items-center justify-center bg-neutral-50">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </main>
     )
@@ -78,6 +78,7 @@ export default function GalleryViewPage({ params }: PageProps) {
 
   return (
     <GalleryViewer
+      slug={slug}
       title={data.gallery.title}
       description={data.gallery.description}
       photos={data.photos}

@@ -33,7 +33,7 @@ export function Sidebar({ role, onNavigate }: SidebarProps) {
 
   return (
     <nav
-      className="flex h-full flex-col bg-rail p-3 text-rail-foreground"
+      className="flex h-full flex-col bg-rail p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] text-rail-foreground"
       aria-label="Main navigation"
     >
       <Link

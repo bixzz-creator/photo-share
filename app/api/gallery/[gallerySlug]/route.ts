@@ -40,14 +40,21 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     const photoCount =
       (gallery.gallery_photos as { count: number }[] | null)?.[0]?.count ?? 0
 
-    return NextResponse.json({
-      slug: gallery.slug,
-      title: gallery.title,
-      description: gallery.description,
-      isPublished: gallery.is_published,
-      photoCount,
-      expiresAt: gallery.expires_at,
-    } satisfies PublicGalleryInfo)
+    return NextResponse.json(
+      {
+        slug: gallery.slug,
+        title: gallery.title,
+        description: gallery.description,
+        isPublished: gallery.is_published,
+        photoCount,
+        expiresAt: gallery.expires_at,
+      } satisfies PublicGalleryInfo,
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+        },
+      }
+    )
   } catch (error) {
     return handleApiError(error)
   }
