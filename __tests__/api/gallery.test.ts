@@ -86,8 +86,8 @@ describe('POST /api/gallery', () => {
     const payload = await response.json()
 
     expect(response.status).toBe(201)
-    // The slug is a freshly generated nanoid, not something the caller chooses.
-    expect(payload.slug).toMatch(/^[a-z0-9]{8}$/)
+    // The slug is derived from the title plus a short unique suffix.
+    expect(payload.slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)+$/)
     expect(payload.galleryUrl).toBe(`http://localhost:3000/gallery/${payload.slug}`)
     expect(payload.pin).toBe(CORRECT_PIN)
     // The hash must never leave the server.

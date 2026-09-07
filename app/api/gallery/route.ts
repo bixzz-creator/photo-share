@@ -1,12 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { customAlphabet } from 'nanoid'
 import { requireAdmin } from '@/lib/auth'
 import { badRequest, handleApiError, notFound, serverError, validationDetails } from '@/lib/http'
-import { absoluteUrl } from '@/lib/utils'
+import { absoluteUrl, gallerySlugFromTitle } from '@/lib/utils'
 import { createGallerySchema } from '@/lib/validations/gallery'
-
-const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 8)
 
 /** GET /api/gallery?eventId=... - galleries for an event (admin only). */
 export async function GET(request: NextRequest) {
@@ -78,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const pinHash = await bcrypt.hash(pin, 10)
-    const slug = nanoid()
+    const slug = gallerySlugFromTitle(title)
 
     const { data: gallery, error } = await supabase
       .from('galleries')

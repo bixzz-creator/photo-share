@@ -76,6 +76,30 @@ export function getFileExtension(filename: string): string {
 }
 
 export function absoluteUrl(path: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  return `${base.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
+  const configured = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
+  const vercelHost =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL ?? ''
+  const vercel = vercelHost ? `https://${vercelHost.replace(/^https?:\/\//, '')}` : ''
+  const configuredIsLocal = !configured || /localhost|127\.0\.0\.1/.test(configured)
+  const base = configuredIsLocal && vercel ? vercel : configured || vercel || 'http://localhost:3000'
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`
+}
+
+/**
+ * Public gallery path segment from the title, e.g. "Beach wedding" →
+ * `beach-wedding-k3m9`. A short suffix keeps two galleries with the same name
+ * from colliding.
+ */
+export function gallerySlugFromTitle(title: string): string {
+  const base =
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40) || 'gallery'
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const bytes = new Uint8Array(4)
+  crypto.getRandomValues(bytes)
+  const suffix = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('')
+  return `${base}-${suffix}`
 }

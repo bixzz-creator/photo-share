@@ -37,7 +37,9 @@ export const verifyPinSchema = z.object({ pin })
 
 export const gallerySlugSchema = z
   .string()
-  .regex(/^[a-z0-9]{4,32}$/, 'Invalid gallery link')
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Invalid gallery link')
+  .min(4)
+  .max(64)
 
 export type CreateGalleryInput = z.infer<typeof createGallerySchema>
 export type VerifyPinInput = z.infer<typeof verifyPinSchema>
