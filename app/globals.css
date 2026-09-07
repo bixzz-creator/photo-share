@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Theme: warm ivory paper, ink type, brass accent.
+ *
+ * The palette is deliberately close to print — a photographer's deliverable is
+ * the photo, so the interface stays neutral and lets colour come from the
+ * images. Brass is the only saturated hue and is reserved for "this is the
+ * selection the customer will see".
+ */
+@layer base {
+  :root {
+    --background: 40 30% 97%;
+    --foreground: 24 14% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 14% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 14% 12%;
+    --primary: 24 14% 13%;
+    --primary-foreground: 40 30% 97%;
+    --secondary: 36 20% 94%;
+    --secondary-foreground: 24 14% 18%;
+    --muted: 36 18% 94.5%;
+    --muted-foreground: 28 7% 44%;
+    --accent: 36 24% 92%;
+    --accent-foreground: 24 14% 18%;
+    --destructive: 4 64% 47%;
+    --destructive-foreground: 40 30% 97%;
+    --border: 32 14% 89%;
+    --input: 32 14% 86%;
+    --ring: 30 40% 42%;
+    --radius: 0.625rem;
+
+    /* Brass accent, used for selection and published state. */
+    --brass: 33 72% 47%;
+    --brass-foreground: 40 40% 98%;
+    --brass-soft: 36 70% 95%;
+
+    /* The navigation rail is ink so the content reads as the page. */
+    --rail: 24 16% 11%;
+    --rail-foreground: 38 22% 92%;
+    --rail-muted: 30 8% 58%;
+    --rail-accent: 26 12% 18%;
+  }
+
+  .dark {
+    --background: 24 14% 8%;
+    --foreground: 38 22% 92%;
+    --card: 24 13% 11%;
+    --card-foreground: 38 22% 92%;
+    --popover: 24 13% 11%;
+    --popover-foreground: 38 22% 92%;
+    --primary: 38 22% 92%;
+    --primary-foreground: 24 14% 12%;
+    --secondary: 26 10% 17%;
+    --secondary-foreground: 38 22% 92%;
+    --muted: 26 10% 16%;
+    --muted-foreground: 32 8% 62%;
+    --accent: 26 10% 19%;
+    --accent-foreground: 38 22% 92%;
+    --destructive: 4 60% 44%;
+    --destructive-foreground: 38 22% 95%;
+    --border: 26 9% 20%;
+    --input: 26 9% 24%;
+    --ring: 33 60% 50%;
+
+    --brass: 35 80% 58%;
+    --brass-foreground: 24 20% 10%;
+    --brass-soft: 30 20% 16%;
+
+    --rail: 24 14% 6%;
+    --rail-foreground: 38 22% 90%;
+    --rail-muted: 30 8% 55%;
+    --rail-accent: 26 10% 14%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Numbers in stats and counts should not jitter as they change. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Page and section titles: high-contrast serif. */
+  .title-display {
+    font-family: var(--font-display), 'Palatino Linotype', Palatino, serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  /* Small labels — italic serif, never all-caps. */
+  .eyebrow {
+    font-family: var(--font-display), 'Palatino Linotype', Palatino, serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+
+  /* Thin brass rule used under section headings. */
+  .rule-brass::after {
+    content: '';
+    display: block;
+    width: 2rem;
+    height: 2px;
+    margin-top: 0.5rem;
+    background-color: hsl(var(--brass));
+  }
+}
+
+/* Masonry grid used by the photo and gallery views. */
+.masonry {
+  column-gap: 1rem;
+  columns: 1;
+}
+
+@media (min-width: 640px) {
+  .masonry {
+    columns: 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry {
+    columns: 3;
+  }
+}
+
+@media (min-width: 1536px) {
+  .masonry {
+    columns: 4;
+  }
+}
+
+.masonry > * {
+  margin-bottom: 1rem;
+  break-inside: avoid;
+}
