@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { isAdmin, requireAdmin, requireEventAccess, requireUser } from '@/lib/auth'
+import { SUPABASE_MAX_ROWS } from '@/lib/constants'
 import { badRequest, handleApiError, notFound, serverError, validationDetails } from '@/lib/http'
+import { deleteStorageObjects } from '@/lib/photos'
+import { createAdminClient } from '@/lib/supabase/server'
 import { updateEventSchema } from '@/lib/validations/event'
 
 interface RouteParams {
@@ -108,26 +111,72 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 /**
  * DELETE /api/events/[eventId] - admin only.
- * Soft delete so photos and galleries stay intact.
+ *
+ * Default is a soft archive so photos and galleries stay intact.
+ * `?permanent=true` removes the event, its photos, galleries, and storage objects.
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { supabase } = await requireAdmin()
+    const permanent = request.nextUrl.searchParams.get('permanent') === 'true'
+
+    if (!permanent) {
+      const { data: event, error } = await supabase
+        .from('events')
+        .update({ status: 'archived' })
+        .eq('id', params.eventId)
+        .select()
+        .maybeSingle()
+
+      if (error) {
+        console.error('[events] archive failed', error)
+        return serverError('Failed to archive event')
+      }
+      if (!event) return notFound('Event not found')
+
+      return NextResponse.json({ event, archived: true })
+    }
+
+    const paths: string[] = []
+    let from = 0
+
+    for (;;) {
+      const { data, error } = await supabase
+        .from('photos')
+        .select('storage_path')
+        .eq('event_id', params.eventId)
+        .range(from, from + SUPABASE_MAX_ROWS - 1)
+
+      if (error) {
+        console.error('[events] photo paths failed', error)
+        return serverError('Failed to delete event photos')
+      }
+
+      const batch = (data ?? [])
+        .map((row) => row.storage_path)
+        .filter((path): path is string => Boolean(path))
+      paths.push(...batch)
+
+      if (batch.length < SUPABASE_MAX_ROWS) break
+      from += SUPABASE_MAX_ROWS
+    }
+
+    await deleteStorageObjects(createAdminClient(), paths)
 
     const { data: event, error } = await supabase
       .from('events')
-      .update({ status: 'archived' })
+      .delete()
       .eq('id', params.eventId)
-      .select()
+      .select('id, name')
       .maybeSingle()
 
     if (error) {
-      console.error('[events] archive failed', error)
-      return serverError('Failed to archive event')
+      console.error('[events] delete failed', error)
+      return serverError('Failed to delete event')
     }
     if (!event) return notFound('Event not found')
 
-    return NextResponse.json({ event, archived: true })
+    return NextResponse.json({ deleted: true, event })
   } catch (error) {
     return handleApiError(error)
   }

@@ -172,7 +172,7 @@ performs its own authorization.
 | `POST /api/events` | Admin | Create an event |
 | `GET /api/events/[id]` | Session | Event, members, photo stats, galleries |
 | `PUT /api/events/[id]` | Admin | Update name, description, date, status |
-| `DELETE /api/events/[id]` | Admin | Soft delete: status becomes `archived` |
+| `DELETE /api/events/[id]` | Admin | Archive by default. `?permanent=true` deletes the event, photos, galleries, and storage objects |
 | `GET /api/events/[id]/members` | Admin | All member accounts with an `isAssigned` flag |
 | `POST /api/events/[id]/members` | Admin | Assign a member |
 | `DELETE /api/events/[id]/members/[memberId]` | Admin | Unassign a member |

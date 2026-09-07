@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { NextRequest } from 'next/server'
-import { GET as getEvent } from '@/app/api/events/[eventId]/route'
+import { DELETE as deleteEvent, GET as getEvent } from '@/app/api/events/[eventId]/route'
 import { GET as listEvents, POST as createEvent } from '@/app/api/events/route'
 import { adminProfile, createSupabaseMock, memberProfile } from '../helpers/supabase-mock'
 
@@ -11,8 +11,9 @@ jest.mock('@/lib/supabase/server', () => ({
   createAdminClient: jest.fn(),
 }))
 
-const { createClient } = jest.requireMock('@/lib/supabase/server') as {
+const { createClient, createAdminClient } = jest.requireMock('@/lib/supabase/server') as {
   createClient: jest.Mock
+  createAdminClient: jest.Mock
 }
 
 function jsonRequest(url: string, body: unknown, method = 'POST') {
@@ -251,5 +252,73 @@ describe('GET /api/events/[eventId]', () => {
     expect(payload.members).toHaveLength(1)
     expect(payload.stats).toMatchObject({ totalPhotos: 12, selectedPhotos: 5, memberCount: 1 })
     expect(payload.canManage).toBe(true)
+  })
+})
+
+describe('DELETE /api/events/[eventId]', () => {
+  it('archives an event by default', async () => {
+    const supabase = createSupabaseMock({
+      user: { id: 'admin-1' },
+      tables: {
+        profiles: { data: adminProfile(), error: null },
+        events: { data: eventRow({ status: 'archived' }), error: null },
+      },
+    })
+    createClient.mockReturnValue(supabase)
+
+    const response = await deleteEvent(
+      new NextRequest('http://localhost:3000/api/events/event-1', { method: 'DELETE' }),
+      { params: { eventId: 'event-1' } }
+    )
+    const payload = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(payload.archived).toBe(true)
+    expect(supabase.__builders('events')[0]?.update).toHaveBeenCalledWith({ status: 'archived' })
+  })
+
+  it('permanently deletes an event and its storage objects', async () => {
+    const supabase = createSupabaseMock({
+      user: { id: 'admin-1' },
+      tables: {
+        profiles: { data: adminProfile(), error: null },
+        photos: { data: [{ storage_path: 'events/event-1/a.jpg' }], error: null },
+        events: { data: { id: 'event-1', name: 'Riverside Wedding' }, error: null },
+      },
+    })
+    const admin = createSupabaseMock()
+    createClient.mockReturnValue(supabase)
+    createAdminClient.mockReturnValue(admin)
+
+    const response = await deleteEvent(
+      new NextRequest('http://localhost:3000/api/events/event-1?permanent=true', {
+        method: 'DELETE',
+      }),
+      { params: { eventId: 'event-1' } }
+    )
+    const payload = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(payload.deleted).toBe(true)
+    expect(admin.__storage.remove).toHaveBeenCalledWith(['events/event-1/a.jpg'])
+    expect(supabase.__builders('events')[0]?.delete).toHaveBeenCalled()
+  })
+
+  it('stops a member from deleting an event', async () => {
+    createClient.mockReturnValue(
+      createSupabaseMock({
+        user: { id: 'member-1' },
+        tables: { profiles: { data: memberProfile(), error: null } },
+      })
+    )
+
+    const response = await deleteEvent(
+      new NextRequest('http://localhost:3000/api/events/event-1?permanent=true', {
+        method: 'DELETE',
+      }),
+      { params: { eventId: 'event-1' } }
+    )
+
+    expect(response.status).toBe(403)
   })
 })

@@ -64,7 +64,12 @@ export async function withSignedUrls(
 
 /** Removes objects from storage, ignoring "already gone" failures. */
 export async function deleteStorageObjects(client: StorageClient, paths: string[]) {
-  if (paths.length === 0) return
-  const { error } = await client.storage.from(STORAGE_BUCKET).remove(paths)
-  if (error) console.error('[photos] failed to remove objects', error)
+  const unique = Array.from(new Set(paths.filter(Boolean)))
+  const chunkSize = 100
+
+  for (let index = 0; index < unique.length; index += chunkSize) {
+    const chunk = unique.slice(index, index + chunkSize)
+    const { error } = await client.storage.from(STORAGE_BUCKET).remove(chunk)
+    if (error) console.error('[photos] failed to remove objects', error)
+  }
 }

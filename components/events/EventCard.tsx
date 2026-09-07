@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Archive, CalendarDays, Camera, Pencil, Users } from 'lucide-react'
+import { Archive, CalendarDays, Camera, Pencil, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -44,7 +44,9 @@ interface EventCardProps {
 export function EventCard({ event, canManage = false, href }: EventCardProps) {
   const router = useRouter()
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [archiving, setArchiving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const detailHref =
     href ?? (canManage ? `/admin/events/${event.id}` : `/member/events/${event.id}/upload`)
@@ -62,6 +64,22 @@ export function EventCard({ event, canManage = false, href }: EventCardProps) {
     }
 
     toast.success(`"${event.name}" archived`)
+    router.refresh()
+  }
+
+  async function remove() {
+    setDeleting(true)
+    const response = await fetch(`/api/events/${event.id}?permanent=true`, { method: 'DELETE' })
+    setDeleting(false)
+    setDeleteOpen(false)
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}))
+      toast.error(payload.error ?? 'Could not delete this event')
+      return
+    }
+
+    toast.success(`"${event.name}" deleted`)
     router.refresh()
   }
 
@@ -132,6 +150,14 @@ export function EventCard({ event, canManage = false, href }: EventCardProps) {
                 <Archive className="h-4 w-4" />
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              aria-label="Delete event"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </>
         )}
       </CardFooter>
@@ -151,6 +177,26 @@ export function EventCard({ event, canManage = false, href }: EventCardProps) {
             </Button>
             <Button variant="destructive" onClick={archive} disabled={archiving}>
               {archiving ? 'Archiving...' : 'Archive event'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete this event?</DialogTitle>
+            <DialogDescription>
+              &ldquo;{event.name}&rdquo; and all of its photos, team assignments, and
+              galleries will be removed. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={remove} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete event'}
             </Button>
           </DialogFooter>
         </DialogContent>
