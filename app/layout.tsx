@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Figtree } from 'next/font/google'
 import { SmoothScroll } from '@/components/layout/SmoothScroll'
+import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 const sans = Figtree({ subsets: ['latin'], variable: '--font-sans' })
