@@ -40,6 +40,8 @@ CREATE TABLE public.event_members (
 );
 
 -- PHOTOS table
+-- Metadata only. Image bytes are NEVER stored here — they live in the private
+-- Storage bucket `photos` at `storage_path`.
 CREATE TABLE public.photos (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   event_id UUID REFERENCES public.events(id) ON DELETE CASCADE NOT NULL,

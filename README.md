@@ -88,7 +88,7 @@ turns a correct PIN into a signed, expiring token so the PIN is never replayed.
 | `profiles` | Role (`admin` / `member`), name, email |
 | `events` | Shoot / job the team is covering |
 | `event_members` | Which photographers belong to which event |
-| `photos` | Upload metadata + private storage path + `is_selected` |
+| `photos` | **Metadata only** (id, event, uploader, filename, storage path, size, created_at). Image bytes are never stored here |
 | `galleries` | Published share: title slug, PIN hash, optional expiry |
 | `gallery_photos` | Ordered photos inside a gallery |
 | `gallery_sessions` | 24h token issued after a correct PIN |
@@ -98,9 +98,10 @@ turns a correct PIN into a signed, expiring token so the PIN is never replayed.
 ## 1. Create the Supabase project
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. Open **SQL Editor** and run `supabase/migrations/001_initial_schema.sql`.
-   It creates the tables, RLS policies, triggers, the `increment_view_count`
-   function, and the private `photos` storage bucket with its policies.
+2. Open **SQL Editor** and run `supabase/migrations/001_initial_schema.sql`,
+   then `supabase/migrations/002_photo_metadata_comments.sql`.
+   The first file creates the tables, RLS policies, triggers, the
+   `increment_view_count` function, and the private `photos` storage bucket.
 3. Optional demo data: run `supabase/seed.sql`. It creates one admin
    (`admin@example.com`) and two members (`member1@example.com`,
    `member2@example.com`), all with the password `Password123!`. Use it on
@@ -215,16 +216,40 @@ performs its own authorization.
 | `GET /api/gallery/[slug]/download/[photoId]` | Gallery session | Streams the original file as an attachment |
 | `GET /api/health` | Public | Load balancer probe. No database. |
 
+### Photo storage
+
+Image files are **not** stored in the database. They go to the private Supabase
+Storage bucket `photos` (`events/{eventId}/{userId}/{file}`). Postgres keeps
+metadata only:
+
+| Column | Spec field |
+| --- | --- |
+| `id` | Photo ID |
+| `event_id` | Event ID |
+| `uploaded_by` | Uploaded By |
+| `filename` / `original_name` | Filename |
+| `storage_path` | Storage Location |
+| `file_size` | File Size |
+| `created_at` | Created At |
+
+Browsers never receive a public file URL. They get a one-hour signed URL, or
+they download through `GET /api/gallery/[slug]/download/[photoId]`.
+
 ### Uploads
 
-`POST /api/photos` takes `eventId`, one or more `files`, and an optional
-`dimensions` JSON map (`{"photo.jpg": {"width": 1600, "height": 1200}}`) that the
-uploader fills in from the client-side preview.
+`POST /api/photos` takes `eventId` and **one or more** `files` (up to 50) in a
+single multipart request, plus an optional `dimensions` JSON map
+(`{"photo.jpg": {"width": 1600, "height": 1200}}`) from the client preview.
 
-Each file is validated on its own, so one bad file never fails the batch. The
-response lists a result per file and returns **201** when at least one file
-landed, **400** when every file failed. `PhotoUploader` sends one request per
-file so each row can show its own progress bar and be retried individually.
+Each file is validated on its own (type, magic bytes, 10 MB cap), uploaded to
+Storage, then inserted as a metadata row. A bad file never fails the rest of
+the batch. The response lists a result per file and returns **201** when at
+least one file landed, **400** when every file failed.
+
+`PhotoUploader` accepts a multi-file drop or picker (`multiple`), queues them,
+and sends each file to that endpoint so a photographer can upload a whole
+card of shots in one sitting. One bad file can be retried without redoing the
+ones that already stored.
 
 ### Large events
 
@@ -404,6 +429,7 @@ lib/
   queries.ts        shared reads used by Server Components
 supabase/
   migrations/001_initial_schema.sql
+  migrations/002_photo_metadata_comments.sql
   seed.sql
 ```
 

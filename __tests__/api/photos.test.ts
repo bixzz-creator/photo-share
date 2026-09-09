@@ -99,6 +99,42 @@ describe('POST /api/photos', () => {
     )
   })
 
+  it('stores multiple files in Storage and writes metadata rows only', async () => {
+    const supabase = assignedMemberClient()
+    const admin = createSupabaseMock()
+    createClient.mockReturnValue(supabase)
+    createAdminClient.mockReturnValue(admin)
+
+    const response = await uploadPhotos(
+      uploadRequest([pngFile('ceremony.png'), pngFile('reception.png')])
+    )
+    const payload = await response.json()
+
+    expect(response.status).toBe(201)
+    expect(payload.uploaded).toBe(2)
+    expect(payload.failed).toBe(0)
+    expect(admin.__storage.upload).toHaveBeenCalledTimes(2)
+
+    const inserts = supabase.__builders('photos').flatMap((builder) => builder.insert.mock.calls)
+    expect(inserts).toHaveLength(2)
+
+    for (const [row] of inserts) {
+      expect(row).toEqual(
+        expect.objectContaining({
+          event_id: EVENT_ID,
+          uploaded_by: 'member-1',
+          filename: expect.any(String),
+          original_name: expect.stringMatching(/\.png$/),
+          storage_path: expect.stringContaining(`events/${EVENT_ID}/member-1/`),
+          file_size: expect.any(Number),
+        })
+      )
+      expect(row).not.toHaveProperty('bytes')
+      expect(row).not.toHaveProperty('blob')
+      expect(row).not.toHaveProperty('content')
+    }
+  })
+
   it('rejects an upload to an event the member is not assigned to', async () => {
     createClient.mockReturnValue(
       createSupabaseMock({

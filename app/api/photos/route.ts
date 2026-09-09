@@ -29,9 +29,11 @@ function parseDimensions(raw: FormDataEntryValue | null): Dimensions {
 /**
  * POST /api/photos
  *
- * Multipart upload of up to MAX_FILES_PER_UPLOAD images for one event. Each
- * file is validated independently: a bad file never fails the whole batch. The
- * response is 400 only when every file failed.
+ * Multipart upload of one or more images (up to MAX_FILES_PER_UPLOAD) for an
+ * event. Bytes go to the private Storage bucket. Postgres only receives
+ * metadata: photo id, event id, uploaded_by, filename, storage_path, file_size,
+ * created_at. Each file is validated independently so a bad file never fails
+ * the whole batch. The response is 400 only when every file failed.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -114,6 +116,7 @@ export async function POST(request: NextRequest) {
         .from(STORAGE_BUCKET)
         .getPublicUrl(storagePath)
 
+      // Metadata only — the image bytes are already in Storage at storagePath.
       const { data: photo, error: dbError } = await supabase
         .from('photos')
         .insert({
