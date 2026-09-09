@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, ImageOff, Loader2, Lock } from 'lucide-react'
+import { ImageOff, Loader2, Lock } from 'lucide-react'
+import { Logo } from '@/components/brand/Logo'
 import { PinEntry } from '@/components/gallery/PinEntry'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { GALLERY_SESSION_STORAGE_KEY, PIN_LENGTH } from '@/lib/constants'
@@ -153,8 +154,8 @@ export default function GalleryPinPage({ params }: PageProps) {
         </Card>
 
         <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <Camera className="h-3.5 w-3.5" />
-          Powered by Photo Sharing Platform
+          <Logo markClassName="h-6 w-6 rounded-md" showWordmark={false} />
+          PhotoShare Studio
         </p>
       </div>
     </main>

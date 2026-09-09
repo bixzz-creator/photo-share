@@ -1,4 +1,4 @@
-import { Aperture } from 'lucide-react'
+import { Logo } from '@/components/brand/Logo'
 import Link from 'next/link'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -23,14 +23,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           aria-hidden="true"
         />
 
-        <Link href="/" className="relative flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brass text-brass-foreground">
-            <Aperture className="h-[1.15rem] w-[1.15rem]" />
-          </span>
-          <span className="flex flex-col leading-tight">
-            <span className="title-display text-[1.05rem]">PhotoShare</span>
-            <span className="eyebrow text-base text-rail-muted">Studio</span>
-          </span>
+        <Link href="/" className="relative">
+          <Logo onDark />
         </Link>
 
         <div className="relative max-w-md space-y-5">
@@ -57,11 +51,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       <div className="flex flex-col items-center justify-center bg-background px-4 py-12 pb-[max(3rem,env(safe-area-inset-bottom))]">
-        <Link href="/" className="mb-10 flex items-center gap-2.5 lg:hidden">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brass text-brass-foreground">
-            <Aperture className="h-4 w-4" />
-          </span>
-          <span className="title-display text-base">PhotoShare Studio</span>
+        <Link href="/" className="mb-10 lg:hidden">
+          <Logo />
         </Link>
 
         <div className="w-full max-w-sm">{children}</div>

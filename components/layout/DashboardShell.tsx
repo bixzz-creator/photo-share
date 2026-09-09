@@ -36,7 +36,7 @@ export function DashboardShell({ fullName, email, role, children }: DashboardShe
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-rail transition-transform duration-200 ease-out lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 w-64 bg-rail transition-transform duration-300 ease-out lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -52,7 +52,10 @@ export function DashboardShell({ fullName, email, role, children }: DashboardShe
           role={role}
           onToggleSidebar={() => setSidebarOpen((open) => !open)}
         />
-        <main className="mx-auto w-full min-w-0 max-w-[1400px] px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
+        <main
+          key={pathname}
+          className="page-stage mx-auto w-full min-w-0 max-w-[1400px] px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-8 lg:px-10"
+        >
           {children}
         </main>
       </div>

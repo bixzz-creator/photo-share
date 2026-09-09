@@ -49,7 +49,10 @@ export function Topbar({ fullName, email, role, onToggleSidebar }: TopbarProps) 
 
       {/* min-w-0 lets the name truncate rather than run off the screen. */}
       <div className="ml-auto flex min-w-0 items-center gap-3">
-        <Badge variant={role === 'admin' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
+        <Badge
+          variant={role === 'admin' ? 'default' : 'secondary'}
+          className="hidden sm:inline-flex"
+        >
           {role}
         </Badge>
 

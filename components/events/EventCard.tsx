@@ -84,7 +84,7 @@ export function EventCard({ event, canManage = false, href }: EventCardProps) {
   }
 
   return (
-    <Card className="flex h-full flex-col shadow-card transition-shadow hover:shadow-lift">
+    <Card className="group flex h-full flex-col overflow-hidden shadow-card transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-lift">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="title-display line-clamp-2 min-w-0 text-lg">

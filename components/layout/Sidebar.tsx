@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Aperture, CalendarDays, LayoutDashboard } from 'lucide-react'
+import { CalendarDays, LayoutDashboard } from 'lucide-react'
+import { Logo } from '@/components/brand/Logo'
 import { cn } from '@/lib/utils'
 import type { UserRole } from '@/lib/constants'
 
@@ -39,17 +40,9 @@ export function Sidebar({ role, onNavigate }: SidebarProps) {
       <Link
         href={role === 'admin' ? '/admin' : '/member'}
         onClick={onNavigate}
-        className="mb-7 flex items-center gap-3 px-3 py-2"
+        className="mb-8 px-2 py-1"
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brass text-brass-foreground">
-          <Aperture className="h-[1.15rem] w-[1.15rem]" />
-        </span>
-        <span className="flex flex-col leading-tight">
-          <span className="title-display text-[1.05rem] text-rail-foreground">
-            PhotoShare
-          </span>
-          <span className="eyebrow text-base text-rail-muted">Studio</span>
-        </span>
+        <Logo onDark />
       </Link>
 
       <p className="eyebrow px-3 pb-2 text-base text-rail-muted">
@@ -71,7 +64,7 @@ export function Sidebar({ role, onNavigate }: SidebarProps) {
               onClick={onNavigate}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
                 isActive
                   ? 'bg-rail-accent font-medium text-rail-foreground'
                   : 'text-rail-muted hover:bg-rail-accent/60 hover:text-rail-foreground'

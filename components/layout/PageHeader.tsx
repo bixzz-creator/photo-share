@@ -39,7 +39,7 @@ export function PageHeader({
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="title-display truncate text-[1.7rem] leading-tight sm:text-[2rem]">
+            <h1 className="title-display rule-brass truncate text-[1.7rem] leading-tight sm:text-[2rem]">
               {title}
             </h1>
             {badge}

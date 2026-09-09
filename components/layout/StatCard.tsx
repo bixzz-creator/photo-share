@@ -15,7 +15,7 @@ export function StatCard({ label, value, icon: Icon, hint, emphasis = false }: S
   return (
     <div
       className={cn(
-        'min-w-0 rounded-xl border bg-card p-5 shadow-card',
+        'min-w-0 rounded-2xl border bg-card p-6 shadow-card transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lift',
         emphasis && 'border-brass/30 bg-brass-soft/50'
       )}
     >
@@ -31,7 +31,7 @@ export function StatCard({ label, value, icon: Icon, hint, emphasis = false }: S
         </span>
       </div>
 
-      <p className="title-display mt-3 text-[2.1rem] leading-none tabular-nums">{value}</p>
+      <p className="stat-figure mt-4 text-[2.15rem]">{value}</p>
       {hint && <p className="mt-2 truncate text-xs text-muted-foreground">{hint}</p>}
     </div>
   )

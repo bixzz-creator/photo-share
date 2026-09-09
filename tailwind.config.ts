@@ -71,8 +71,8 @@ const config: Config = {
         xl: 'calc(var(--radius) + 4px)',
       },
       boxShadow: {
-        card: '0 1px 2px 0 hsl(24 14% 12% / 0.04), 0 1px 3px 0 hsl(24 14% 12% / 0.03)',
-        lift: '0 4px 16px -4px hsl(24 14% 12% / 0.1), 0 2px 6px -2px hsl(24 14% 12% / 0.06)',
+        card: '0 1px 2px 0 hsl(24 14% 12% / 0.05), 0 8px 24px -12px hsl(24 14% 12% / 0.08)',
+        lift: '0 18px 40px -20px hsl(24 14% 12% / 0.22), 0 8px 16px -10px hsl(24 14% 12% / 0.08)',
       },
       keyframes: {
         'accordion-down': {

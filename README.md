@@ -325,6 +325,27 @@ start` to judge real navigation speed.
   `role: 'member'`. The generated password is returned exactly once; Supabase
   keeps only a hash of it.
 
+### Technical requirements (brief)
+
+| Requirement | Where it lives |
+| --- | --- |
+| Authentication & role-based authorization | Supabase Auth + `profiles.role`; `middleware.ts` gates `/admin` and `/member`; `requireAdmin` / `requireEventAccess` on APIs |
+| Secure photo uploads & object storage | Magic-byte checks, 10 MB cap, private `photos` bucket, signed URLs only |
+| Database schema & APIs | `supabase/migrations/001_initial_schema.sql` and `/api/*` route handlers |
+| Input validation & error handling | Zod in `lib/validations/`; `handleApiError` in `lib/http.ts` |
+| Responsive UI & basic security | Tailwind breakpoints, `dvh` / safe-area, nosniff / frame / referrer headers |
+| Cloud deployment | Vercel (`bom1`) + Supabase; live at https://photo-share-lovat.vercel.app |
+
+### Handled scenarios
+
+| Scenario | Behaviour | Test |
+| --- | --- | --- |
+| A user accessing another event | Member gets **403** `Not assigned to this event`. RLS also hides the row. | `events.test.ts` |
+| A team member publishing a gallery | **403** `Admin only`. Only admins can `POST /api/gallery`. | `gallery.test.ts` |
+| A failed photo upload | File is rejected (type, magic bytes, size, or storage error). Other files in the batch still store. The uploader shows the error and a Retry button. | `photos.test.ts`, `PhotoUploader.test.tsx` |
+| An incorrect gallery PIN | **401** `Invalid PIN` with remaining attempts. Five failures lock the IP for an hour. | `gallery.test.ts`, `PinEntry.test.tsx` |
+| Access to unpublished photos | Unpublished galleries **404** to the public (PIN verify included). Gallery photo/download routes refuse the session. Unselected event photos are never linked into a gallery. Direct `/api/photos/[id]` requires a signed-in user with event access. | `gallery.test.ts`, `photos.test.ts` |
+
 One thing to change before real production use:
 
 1. Rate limiting is in process memory, so each serverless instance counts
@@ -378,7 +399,7 @@ rather than `next/image`, so no image-optimisation quota is consumed.
 
 ## Testing
 
-91 tests across 9 suites.
+93 tests across 9 suites.
 
 ```
 __tests__/api/auth.test.ts          admin registration, login, 401s, rate limiting

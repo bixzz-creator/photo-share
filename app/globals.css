@@ -31,7 +31,7 @@
     --border: 32 14% 89%;
     --input: 32 14% 86%;
     --ring: 30 40% 42%;
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
     /* Brass accent, used for selection and published state. */
     --brass: 33 72% 47%;
@@ -85,9 +85,10 @@
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    scroll-padding-top: 1rem;
   }
 
-  @media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  @media (prefers-reduced-motion: no-preference) {
     html {
       scroll-behavior: smooth;
     }
@@ -114,12 +115,40 @@
 }
 
 @layer components {
-  /* Page and section titles: high-contrast serif. */
+  /* Page and section titles: bold uppercase sans. */
   .title-display {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.15;
+    text-transform: uppercase;
+  }
+
+  /* Brand lockup — mixed-case serif, not the page-title style. */
+  .brand-wordmark {
     font-family: var(--font-display), 'Palatino Linotype', Palatino, serif;
     font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
+    font-size: 1.12rem;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  .brand-studio {
+    font-family: var(--font-display), 'Palatino Linotype', Palatino, serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    margin-top: 0.12rem;
+  }
+
+  /* Dashboard stat numbers stay tabular, never uppercase. */
+  .stat-figure {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Small labels — italic serif, never all-caps. */
@@ -140,6 +169,27 @@
     height: 2px;
     margin-top: 0.5rem;
     background-color: hsl(var(--brass));
+  }
+
+  .page-stage {
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-stage {
+      animation: none;
+    }
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

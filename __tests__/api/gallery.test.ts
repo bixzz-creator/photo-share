@@ -403,6 +403,36 @@ describe('GET /api/gallery/[gallerySlug]/photos', () => {
     expect(response.status).toBe(401)
     expect(payload.error).toBe('Gallery session has expired')
   })
+
+  it('does not return photos when the gallery is unpublished', async () => {
+    createAdminClient.mockReturnValue(
+      createSupabaseMock({
+        tables: {
+          gallery_sessions: {
+            data: activeSession({
+              gallery: {
+                id: 'gallery-1',
+                slug: SLUG,
+                title: 'Draft',
+                description: null,
+                is_published: false,
+                expires_at: null,
+              },
+            }),
+            error: null,
+          },
+        },
+      })
+    )
+
+    const response = await galleryPhotos(photosRequest(signSessionToken(rawToken)), {
+      params: { gallerySlug: SLUG },
+    })
+    const payload = await response.json()
+
+    expect(response.status).toBe(401)
+    expect(payload.error).toBe('Gallery session is invalid')
+  })
 })
 
 describe('GET /api/gallery/[gallerySlug]/download/[photoId]', () => {

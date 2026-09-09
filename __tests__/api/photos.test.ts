@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server'
 import { GET as listPhotos } from '@/app/api/events/[eventId]/photos/route'
 import { POST as bulkSelect } from '@/app/api/events/[eventId]/photos/select/route'
-import { PATCH as patchPhoto } from '@/app/api/photos/[photoId]/route'
+import { GET as getPhoto, PATCH as patchPhoto } from '@/app/api/photos/[photoId]/route'
 import { POST as uploadPhotos } from '@/app/api/photos/route'
 import { MAX_FILE_SIZE } from '@/lib/constants'
 import { clearRateLimit } from '@/lib/rate-limit'
@@ -157,6 +157,17 @@ describe('POST /api/photos', () => {
     createClient.mockReturnValue(createSupabaseMock({ user: null }))
 
     const response = await uploadPhotos(uploadRequest([pngFile()]))
+
+    expect(response.status).toBe(401)
+  })
+
+  it('rejects fetching a photo with no session', async () => {
+    createClient.mockReturnValue(createSupabaseMock({ user: null }))
+
+    const response = await getPhoto(
+      new NextRequest('http://localhost:3000/api/photos/photo-1'),
+      { params: { photoId: 'photo-1' } }
+    )
 
     expect(response.status).toBe(401)
   })

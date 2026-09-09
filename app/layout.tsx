@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Figtree } from 'next/font/google'
-import { Toaster } from '@/components/ui/sonner'
+import { SmoothScroll } from '@/components/layout/SmoothScroll'
 import './globals.css'
 
 const sans = Figtree({ subsets: ['latin'], variable: '--font-sans' })
@@ -15,11 +15,15 @@ const display = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Photo Sharing Platform',
-    template: '%s · Photo Sharing Platform',
+    default: 'PhotoShare Studio',
+    template: '%s · PhotoShare Studio',
   },
   description:
     'Collect event photos from your team, curate the best shots, and share PIN protected galleries with clients.',
+  icons: {
+    icon: '/brand/logo-mark.png',
+    apple: '/brand/logo-mark.png',
+  },
 }
 
 export const viewport: Viewport = {
@@ -34,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${sans.variable} ${display.variable} font-sans antialiased`}>
+        <SmoothScroll />
         {children}
         <Toaster />
       </body>
