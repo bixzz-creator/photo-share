@@ -9,6 +9,21 @@ that the customer opens with a link — no account required.
 **Stack:** Next.js 14 (App Router) · Supabase (Postgres, Auth, Storage) ·
 Tailwind CSS · shadcn/ui · Jest + React Testing Library · deploys to Vercel.
 
+## Submission (evaluators)
+
+| Deliverable | Value |
+| --- | --- |
+| Live application | https://photo-share-lovat.vercel.app |
+| Source repository | https://github.com/bixzz-creator/photo-share |
+| Demo admin | `binusharukesh3645@gmail.com` / `12345678` |
+| Demo team member | `photographer@example.com` / `Password123!` |
+| Demo gallery | https://photo-share-lovat.vercel.app/gallery/evaluator-demo-wedding |
+| Demo gallery PIN | `246810` |
+
+These are throwaway evaluation accounts. API keys and service-role secrets are
+not stored in git (see `.env.example`). The member is already assigned to
+**Evaluator Demo Wedding** and can upload at `/member/events`.
+
 ---
 
 ## Architecture
@@ -68,6 +83,16 @@ event — it is what every "can this user touch this event?" check reads.
 `galleries` holds the bcrypt PIN hash and the public slug; `gallery_sessions`
 turns a correct PIN into a signed, expiring token so the PIN is never replayed.
 
+| Table | Purpose |
+| --- | --- |
+| `profiles` | Role (`admin` / `member`), name, email |
+| `events` | Shoot / job the team is covering |
+| `event_members` | Which photographers belong to which event |
+| `photos` | Upload metadata + private storage path + `is_selected` |
+| `galleries` | Published share: title slug, PIN hash, optional expiry |
+| `gallery_photos` | Ordered photos inside a gallery |
+| `gallery_sessions` | 24h token issued after a correct PIN |
+
 ---
 
 ## 1. Create the Supabase project
@@ -99,7 +124,7 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | Project Settings → API | Safe in the browser |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project Settings → API | Safe in the browser |
 | `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API | **Server only.** Bypasses RLS |
-| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` locally, `https://photo-share.vercel.app` in production | Canonical host for shareable gallery links. Never `photo-share-lovat.vercel.app`. |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` locally, `https://photo-share-lovat.vercel.app` in production | Canonical host for shareable gallery links |
 | `GALLERY_SESSION_SECRET` | `openssl rand -hex 32` | Signs gallery session tokens |
 
 ## 3. Run it
@@ -282,22 +307,36 @@ One thing to change before real production use:
    [`@upstash/ratelimit`](https://github.com/upstash/ratelimit) (free tier) if
    you need limits shared across instances.
 
+## Known limitations
+
+- **Vercel hostname.** The name `photo-share.vercel.app` was already taken, so
+  the live app is `https://photo-share-lovat.vercel.app`. Shareable gallery
+  links are built on that host.
+- **Rate limits are per instance.** Login, upload, and PIN attempt counters live
+  in process memory. They reset when a serverless instance sleeps and are not
+  shared across instances.
+- **Gallery PIN is write-once.** The PIN is bcrypt-hashed; the plaintext is
+  returned only at publish time and cannot be looked up later.
+- **Signed URLs expire in one hour.** Refresh the gallery page to obtain new
+  ones. Storage itself stays private.
+- **Free-tier cold starts.** The first request after idle can take a few
+  seconds on Vercel Hobby and Supabase free.
+- **No image CDN/transform pipeline.** Photos are served as signed originals
+  (plus client-side lazy loading) so the Vercel image-optimisation quota is not
+  consumed. Thumbnails/resizing were left as a bonus.
+
 ## Deploying to Vercel
 
-Shareable gallery links are `https://photo-share.vercel.app/gallery/{gallery-title}` —
-for example `https://photo-share.vercel.app/gallery/ganesh-wedding`. The path is the
-event title, not a random id, and it never includes `/view` (that page is only for
-a customer who already entered the PIN).
-
-If Vercel assigned a suffix such as `photo-share-lovat.vercel.app`, rename the
-project to `photo-share` under **Settings → General** so the production domain
-matches. The app also rewrites that suffix when it builds a customer link, but
-the project itself should live at `photo-share.vercel.app`.
+Shareable gallery links are
+`https://photo-share-lovat.vercel.app/gallery/{gallery-title}` — for example
+`https://photo-share-lovat.vercel.app/gallery/evaluator-demo-wedding`. The path
+is the event title, not a random id, and it never includes `/view` (that page is
+only for a customer who already entered the PIN).
 
 1. Push the repository to GitHub, then import it at
    [vercel.com/new](https://vercel.com/new). The framework preset is detected.
 2. Add all five environment variables from `.env.example` to the project. Set
-   `NEXT_PUBLIC_APP_URL` to `https://photo-share.vercel.app`.
+   `NEXT_PUBLIC_APP_URL` to `https://photo-share-lovat.vercel.app`.
 3. Deploy, then add the same URL to **Authentication → URL Configuration** in
    Supabase (Site URL plus a `/**` redirect entry).
 
@@ -305,6 +344,8 @@ Vercel is the load balancer: Anycast at the edge, then serverless functions in
 Mumbai (`bom1` in `vercel.json`) so they sit next to a typical India/South-Asia
 Supabase project. `GET /api/health` is the probe those edges can hit. Static
 assets are immutable-cached; public gallery metadata is cached for 30 seconds.
+GitHub Actions (`.github/workflows/ci.yml`) runs typecheck, lint, and Jest on
+every push to `main`.
 
 Everything stays inside the free tiers: Vercel Hobby for hosting, Supabase free
 for Postgres, Auth and 1 GB of storage. Photos are served through signed URLs
@@ -330,6 +371,16 @@ API route tests run in Jest's `node` environment (set per file with an
 `@jest-environment` docblock) and drive the real route handlers against the
 Supabase mock in `__tests__/helpers/supabase-mock.ts`. Component tests run in
 jsdom; `jest.polyfills.ts` fills in the web primitives jsdom lacks.
+
+The suites map to the brief's testing requirements:
+
+- **Authentication and authorization** — `__tests__/api/auth.test.ts`,
+  `__tests__/api/members.test.ts`, `__tests__/api/events.test.ts`
+- **Photo access controls** — `__tests__/api/photos.test.ts` (magic bytes, size
+  cap, member vs admin delete/select, paging)
+- **Gallery publishing workflows** — `__tests__/api/gallery.test.ts`
+- **PIN-protected access verification** — gallery verify/session tests plus
+  `__tests__/components/PinEntry.test.tsx`
 
 ## Project layout
 

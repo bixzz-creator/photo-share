@@ -29,7 +29,7 @@ interface GalleryCardProps {
 export function GalleryCard({ gallery, pin }: GalleryCardProps) {
   const [copied, setCopied] = useState(false)
   const shareUrl = gallery.galleryUrl
-    .replace(/photo-share-[a-z0-9]+\.vercel\.app/gi, 'photo-share.vercel.app')
+    .replace(/https?:\/\/photo-share\.vercel\.app/gi, 'https://photo-share-lovat.vercel.app')
     .replace(/\/view\/?$/i, '')
 
   async function copyLink() {

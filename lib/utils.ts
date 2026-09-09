@@ -75,7 +75,7 @@ export function getFileExtension(filename: string): string {
   return parts.length > 1 ? parts.pop()!.toLowerCase() : ''
 }
 
-const CANONICAL_APP_URL = 'https://photo-share.vercel.app'
+const CANONICAL_APP_URL = 'https://photo-share-lovat.vercel.app'
 
 function hostFromUrl(value: string): string {
   try {
@@ -86,13 +86,12 @@ function hostFromUrl(value: string): string {
 }
 
 /**
- * Vercel appends a random word when the project name is taken
- * (`photo-share-lovat.vercel.app`). Shareable customer links should use the
- * canonical `photo-share.vercel.app` host plus the gallery title slug.
+ * The Vercel project lives at `photo-share-lovat.vercel.app` (`photo-share`
+ * was already taken). Shareable customer links always use that live host.
  */
 function canonicalizeAppOrigin(value: string): string {
   const host = hostFromUrl(value)
-  if (/^photo-share-[a-z0-9]+\.vercel\.app$/i.test(host)) return CANONICAL_APP_URL
+  if (/^photo-share(?:-[a-z0-9]+)?\.vercel\.app$/i.test(host)) return CANONICAL_APP_URL
   return `https://${host}`.replace(/\/$/, '')
 }
 
